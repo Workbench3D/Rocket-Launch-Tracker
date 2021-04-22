@@ -1,6 +1,8 @@
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery, \
+    InlineKeyboardButton, InlineKeyboardMarkup
 import os
 import os.path
+from datetime import datetime
 
 from bot.handlers.utils import haversine, five_launch
 
@@ -32,14 +34,37 @@ def user_coordinates(update, context):
                               reply_markup=get_keyboard())
 
 
-# команда получения данных по пяти пускам
+# команда получения данных и представлении в виде кнопок по пяти пускам
 def rocket_launch(update, context):
     launch = five_launch()
-    for item in launch:
-        text = item['text']
-        filename = f'images/{item["image"]}.jpg'
-        image = os.path.abspath(filename)
 
-        chat_id = update.effective_chat.id
-        context.bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'),
-                               caption=text, reply_markup=get_keyboard())
+    inline_list = []
+    for item in launch:
+        # print(item)
+        callback_data = item['name_mission']
+        name_mission = item['name_mission']
+        inline_button = [InlineKeyboardButton(
+            text=name_mission, callback_data=callback_data)]
+        inline_list.append(inline_button)
+    inline_keyboard = InlineKeyboardMarkup(inline_list)
+    text = 'Названия миссии ближайших пяти пусков ракето-носителей'
+    update.message.reply_text(text=text, reply_markup=inline_keyboard)
+
+
+def rocket_info(update, context):
+    query = update.callback_query
+    query.answer()
+    launch = five_launch()
+    text = str()
+    image = str()
+    for item in launch:
+        if query.data == item['name_mission']:
+            text = item['text']
+            image = item['image']
+
+    filename = os.path.join('images', f'{image}.jpg')
+    image = os.path.abspath(filename)
+
+    chat_id = update.effective_chat.id
+    context.bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'),
+                           caption=text)

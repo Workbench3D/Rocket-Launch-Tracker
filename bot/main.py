@@ -1,13 +1,16 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, \
+    MessageHandler, Updater
 import logging
 
 from bot import settings
-from bot.handlers import handlers_functions
+from bot.handlers.handlers_functions import *
 
 from logging.handlers import RotatingFileHandler
 
 
-log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 logFile = 'bot.log'
 
@@ -32,17 +35,15 @@ def main():
     dp = updater.dispatcher
 
     # обработчик команд
-    start_handler = CommandHandler('start', handlers_functions.start_bot)
+    start_handler = CommandHandler('start', start_bot)
     dp.add_handler(start_handler)
-    # dp.add_handler(CommandHandler('guess', guess_number))
-    # dp.add_handler(CommandHandler('cat', send_cat_picture))
 
     # обработчик кнопок
     dp.add_handler(MessageHandler(Filters.regex(
-        '^(Список ближайших пяти пусков ракето-носителей)$'),
-        handlers_functions.rocket_launch))
-    dp.add_handler(MessageHandler(Filters.location,
-                                  handlers_functions.user_coordinates))
+        '^(Список ближайших пяти пусков ракето-носителей)$'), rocket_launch))
+    dp.add_handler(MessageHandler(Filters.location, user_coordinates))
+
+    dp.add_handler(CallbackQueryHandler(rocket_info))
 
     # обработчик любых сообщений, обрабатывает только текст
     # dp.add_handler(MessageHandler(Filters.text, talk_to_me))

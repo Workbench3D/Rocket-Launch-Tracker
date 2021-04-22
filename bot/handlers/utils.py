@@ -37,19 +37,20 @@ def five_launch():
     launch = []
 
     for item in result:
-        name = str(item['name'])
+        name_mission = str(item['name'])
         provider = str(item['provider']['name'])
         vehicle = str(item['vehicle']['name'])
         location = str(item['pad']['location']['name'])
         win_open = str(item['win_open'])
 
-        text = f'Название миссии - {name}\n' \
+        text = f'Название миссии - {name_mission}\n' \
                f'Поставщик - {provider}\n' \
                f'Ракето-носитель - {vehicle}\n' \
                f'Место пуска - {location}\n' \
                f'Время пуска - {win_open}\n'
 
-        message = {'image': vehicle, 'text': text}
+        message = {'image': vehicle, 'name_mission': name_mission,
+                   'text': text}
         launch.append(message)
 
     return launch
