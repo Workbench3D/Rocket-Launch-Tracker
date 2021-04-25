@@ -1,32 +1,8 @@
-from math import pi, sqrt, sin, cos, atan2
 import os
 import os.path
 import requests
-
-
-def haversine(pos1):
-    filename = f'resources/pad_location.csv'
-    pad_location = os.path.abspath(filename)
-
-    pos2 = {'longitude': 63.30778, 'latitude': 45.96611}
-
-    degree_to_rad = float(pi / 180.0)
-
-    lat1 = pos1['latitude']
-    long1 = pos1['longitude']
-
-    lat2 = pos2['latitude']
-    long2 = pos2['longitude']
-
-    d_lat = (lat2 - lat1) * degree_to_rad
-    d_long = (long2 - long1) * degree_to_rad
-
-    a = pow(sin(d_lat / 2), 2) + cos(lat1 * degree_to_rad) * \
-        cos(lat2 * degree_to_rad) * pow(sin(d_long / 2), 2)
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    km = round((6367 * c), 1)
-
-    return km
+import csv
+from pyproj import Geod
 
 
 def five_launch():
@@ -54,3 +30,64 @@ def five_launch():
         launch.append(message)
 
     return launch
+
+
+def distance_azimuth(my_point):
+    filename = os.path.join('resources', 'pad_location.csv')
+    pad_location = os.path.abspath(filename)
+
+    my_lat = my_point['latitude']
+    my_long = my_point['longitude']
+
+    distance = None
+
+    with open(pad_location, encoding="utf-8") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            pad_lat = row[2]
+            pad_long = row[3]
+
+            # расчет прямого, обратного азимута и дистанции(в метрах)
+            forward_a, back_a, length = Geod(ellps='WGS84').\
+                inv(my_long, my_lat, pad_long, pad_lat)
+
+            if distance is None or length <= distance:
+                distance = length
+                pad_name = row[1]
+                azimuth = forward_a
+
+    route = format_coordinate(distance=distance, pad_name=pad_name,
+                              azimuth=azimuth)
+
+    return route
+
+
+# функция обрабатывающая данный по геолокации
+def format_coordinate(distance, pad_name, azimuth):
+
+    # преобразование азимута в направление
+    direction = {'северном': (-22.5, 22.5),
+                 'северо-восточном': (22.5, 67.5),
+                 'восточном': (67.5, 112.5),
+                 'юго-восточном': (112.5, 157.5),
+                 'западном': (-112.5, -67.5),
+                 'северо-западном': (-67.5, -22.5,),
+                 'юго-западном': (-157.5, -112.5)}
+
+    azimuth = round(azimuth, 1)
+
+    if azimuth >= 157.5 or azimuth <= -157.5:
+        azimuth = 'южном'
+    else:
+        for name, coordinate in direction.items():
+            if coordinate[0] <= azimuth < coordinate[1]:
+                azimuth = name
+                break
+
+    # преобразование (м -> км)
+    KM = 1000
+    distance = round((distance/KM), 1)
+
+    route = {'pad_name': pad_name, 'distance': distance, 'azimuth': azimuth}
+
+    return route

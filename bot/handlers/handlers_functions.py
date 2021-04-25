@@ -1,10 +1,10 @@
 from telegram import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery, \
-    InlineKeyboardButton, InlineKeyboardMarkup
+    InlineKeyboardButton, InlineKeyboardMarkup, Location
 import os
 import os.path
 from datetime import datetime
 
-from bot.handlers.utils import haversine, five_launch
+from bot.handlers.utils import distance_azimuth, five_launch
 
 
 # клавиатура
@@ -29,9 +29,14 @@ def start_bot(update, context):
 
 # команда получения геокоординат
 def user_coordinates(update, context):
-    distance = haversine(update.message.location)
-    update.message.reply_text(f'Растояние до космодрома {distance} км!',
-                              reply_markup=get_keyboard())
+    route = distance_azimuth(update.message.location)
+    pad_name = route['pad_name']
+    distance = route['distance']
+    azimuth = route['azimuth']
+    text = f'Ближайший космодром {pad_name}\n' \
+           f'расположен на растоянии {distance} км,\n' \
+           f'на {azimuth} напровлении!'
+    update.message.reply_text(text=text, reply_markup=get_keyboard())
 
 
 # команда получения данных и представлении в виде кнопок по пяти пускам
@@ -40,7 +45,6 @@ def rocket_launch(update, context):
 
     inline_list = []
     for item in launch:
-        # print(item)
         callback_data = item['name_mission']
         name_mission = item['name_mission']
         inline_button = [InlineKeyboardButton(
