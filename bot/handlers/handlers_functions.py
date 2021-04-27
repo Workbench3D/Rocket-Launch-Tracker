@@ -4,7 +4,8 @@ import os
 import os.path
 from datetime import datetime
 
-from bot.handlers.utils import distance_azimuth, five_launch
+from bot.handlers.utils import find_near_pad_location, \
+    send_processed_info_five_launch
 
 
 # клавиатура
@@ -28,8 +29,8 @@ def start_bot(update, context):
 
 
 # команда получения геокоординат
-def user_coordinates(update, context):
-    route = distance_azimuth(update.message.location)
+def send_near_pad_location(update, context):
+    route = find_near_pad_location(update.message.location)
     pad_name = route['pad_name']
     distance = route['distance']
     azimuth = route['azimuth']
@@ -40,8 +41,8 @@ def user_coordinates(update, context):
 
 
 # команда получения данных и представлении в виде кнопок по пяти пускам
-def rocket_launch(update, context):
-    launch = five_launch()
+def send_launch_buttons(update, context):
+    launch = send_processed_info_five_launch()
 
     inline_list = []
     for item in launch:
@@ -55,10 +56,10 @@ def rocket_launch(update, context):
     update.message.reply_text(text=text, reply_markup=inline_keyboard)
 
 
-def rocket_info(update, context):
+def send_launch_info(update, context):
     query = update.callback_query
     query.answer()
-    launch = five_launch()
+    launch = send_processed_info_five_launch()
     text = str()
     image = str()
     for item in launch:
@@ -70,5 +71,8 @@ def rocket_info(update, context):
     image = os.path.abspath(filename)
 
     chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'),
-                           caption=text)
+    try:
+        context.bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'),
+                               caption=text)
+    except FileNotFoundError:
+        context.bot.send_message(chat_id=chat_id, text=text)

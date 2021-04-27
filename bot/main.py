@@ -40,10 +40,11 @@ def main():
 
     # обработчик кнопок
     dp.add_handler(MessageHandler(Filters.regex(
-        '^(Список ближайших пяти пусков ракето-носителей)$'), rocket_launch))
-    dp.add_handler(MessageHandler(Filters.location, user_coordinates))
+        '^(Список ближайших пяти пусков ракето-носителей)$'),
+        send_launch_buttons))
+    dp.add_handler(MessageHandler(Filters.location, send_near_pad_location))
 
-    dp.add_handler(CallbackQueryHandler(rocket_info))
+    dp.add_handler(CallbackQueryHandler(send_launch_info))
 
     # обработчик любых сообщений, обрабатывает только текст
     # dp.add_handler(MessageHandler(Filters.text, talk_to_me))

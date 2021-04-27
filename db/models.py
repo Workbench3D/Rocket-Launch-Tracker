@@ -12,4 +12,5 @@ class PadLocation(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
+
 Base.metadata.create_all(engine)

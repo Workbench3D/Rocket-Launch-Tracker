@@ -5,7 +5,7 @@ import csv
 from pyproj import Geod
 
 
-def five_launch():
+def send_processed_info_five_launch():
     url = 'https://fdo.rocketlaunch.live/json/launches/next/5'
     r = requests.get(url)
     result = r.json()['result']
@@ -32,7 +32,7 @@ def five_launch():
     return launch
 
 
-def distance_azimuth(my_point):
+def find_near_pad_location(my_point):
     filename = os.path.join('resources', 'pad_location.csv')
     pad_location = os.path.abspath(filename)
 
@@ -56,14 +56,14 @@ def distance_azimuth(my_point):
                 pad_name = row[1]
                 azimuth = forward_a
 
-    route = format_coordinate(distance=distance, pad_name=pad_name,
+    route = formatted_coordinate(distance=distance, pad_name=pad_name,
                               azimuth=azimuth)
 
     return route
 
 
 # функция обрабатывающая данный по геолокации
-def format_coordinate(distance, pad_name, azimuth):
+def formatted_coordinate(distance, pad_name, azimuth):
 
     # преобразование азимута в направление
     direction = {'северном': (-22.5, 22.5),
