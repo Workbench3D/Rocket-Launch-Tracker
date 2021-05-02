@@ -17,7 +17,8 @@ PySocks==1.7.1
 urllib3==1.26.4
 
 # for database
-sqlalchemy==1.4.6
+sqlalchemy==1.4.12
+psycopg2==2.8.6
 
 # for work GPS
 pyproj==3.0.1

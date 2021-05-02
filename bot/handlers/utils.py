@@ -1,14 +1,13 @@
+from bot import settings
+from pyproj import Geod
 import os
 import os.path
 import requests
 import csv
-from pyproj import Geod
 
 
 def send_processed_info_five_launch():
-    url = 'https://fdo.rocketlaunch.live/json/launches/next/5'
-    r = requests.get(url)
-    result = r.json()['result']
+    result = requests.get(settings.ROCKET_LAUNCH_API).json()['result']
 
     launch = []
 

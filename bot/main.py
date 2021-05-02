@@ -13,14 +13,10 @@ log_formatter = logging.Formatter(
 )
 
 logFile = 'bot.log'
-
 my_handler = RotatingFileHandler(logFile, maxBytes=10240)
 my_handler.setFormatter(log_formatter)
-my_handler.setLevel(logging.INFO)
-
 app_log = logging.getLogger('root')
 app_log.setLevel(logging.INFO)
-
 app_log.addHandler(my_handler)
 
 PROXY = {'proxy_url': settings.PROXY_URL,
@@ -42,6 +38,12 @@ def main():
     dp.add_handler(MessageHandler(Filters.regex(
         '^(Список ближайших пяти пусков ракето-носителей)$'),
         send_launch_buttons))
+    dp.add_handler(MessageHandler(Filters.regex(
+        f'^(Подписаться на получение уведомлений)$'),
+        subscription))
+    dp.add_handler(MessageHandler(Filters.regex(
+        '^(Отписаться от получение уведомлений)$'),
+        unsubscribe))
     dp.add_handler(MessageHandler(Filters.location, send_near_pad_location))
 
     dp.add_handler(CallbackQueryHandler(send_launch_info))
