@@ -20,7 +20,7 @@ class User(Base):
         self.sub_status = sub_status
 
     def __repr__(self):
-        return f"'User_id': {self.user_id}, 'sub_status': {self.sub_status}"
+        return f'User_id: {self.user_id}, sub_status: {self.sub_status}'
 
 
 Base.metadata.create_all(engine)

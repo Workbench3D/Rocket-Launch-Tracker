@@ -1,4 +1,5 @@
 from bot import settings
+from datetime import datetime
 from pyproj import Geod
 import os
 import os.path
@@ -12,20 +13,17 @@ def send_processed_info_five_launch():
     launch = []
 
     for item in result:
-        name_mission = str(item['name'])
-        provider = str(item['provider']['name'])
-        vehicle = str(item['vehicle']['name'])
-        location = str(item['pad']['location']['name'])
-        win_open = str(item['win_open'])
-
-        text = f'Название миссии - {name_mission}\n' \
-               f'Поставщик - {provider}\n' \
-               f'Ракето-носитель - {vehicle}\n' \
-               f'Место пуска - {location}\n' \
-               f'Время пуска - {win_open}\n'
+        name_mission = item['name']
+        provider = item['provider']['name']
+        vehicle = item['vehicle']['name']
+        location = item['pad']['location']['name']
+        start_time = item['win_open']
+        if start_time is not None:
+            start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%MZ')
 
         message = {'image': vehicle, 'name_mission': name_mission,
-                   'text': text}
+                   'start_time': start_time, 'provider': provider,
+                   'location': location}
         launch.append(message)
 
     return launch
@@ -56,7 +54,7 @@ def find_near_pad_location(my_point):
                 azimuth = forward_a
 
     route = formatted_coordinate(distance=distance, pad_name=pad_name,
-                              azimuth=azimuth)
+                                 azimuth=azimuth)
 
     return route
 

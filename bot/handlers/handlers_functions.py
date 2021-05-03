@@ -1,5 +1,5 @@
 from telegram import ReplyKeyboardMarkup, KeyboardButton, \
-    InlineKeyboardButton, InlineKeyboardMarkup, Location
+    InlineKeyboardButton, InlineKeyboardMarkup
 import os
 import os.path
 from datetime import datetime
@@ -9,7 +9,6 @@ from bot.handlers.utils import find_near_pad_location, \
     send_processed_info_five_launch
 import random
 import asyncio
-
 
 session = Session()
 
@@ -74,8 +73,16 @@ def send_launch_info(update, context):
     image = str()
     for item in launch:
         if query.data == item['name_mission']:
-            text = item['text']
+            name_mission = item['name_mission']
+            provider = item['provider']
             image = item['image']
+            location = item['location']
+            start_time = item['start_time']
+            text = f'Название миссии - {name_mission}\n' \
+                   f'Поставщик - {provider}\n' \
+                   f'Ракето-носитель - {image}\n' \
+                   f'Место пуска - {location}\n' \
+                   f'Время пуска - {start_time}\n'
 
     filename = os.path.join('images', f'{image}.jpg')
     image = os.path.abspath(filename)
@@ -101,17 +108,17 @@ def subscription(update, context):
         update.message.reply_text(text, reply_markup=get_keyboard())
 
 
-def unsubscribe(update, context):
-    user_id = update.message.from_user.id
-    user_info = session.query(User).filter_by(user_id=user_id).first()
-    if user_info.sub_status is False:
-        text = 'Вы уже отписаны от уведомлений бота!'
-        update.message.reply_text(text, reply_markup=get_keyboard())
-    else:
-        user_info.sub_status = False
-        session.commit()
-        text = 'Вы отписались от уведомлений бота!'
-        update.message.reply_text(text, reply_markup=get_keyboard())
+# def unsubscribe(update, context):
+#     user_id = update.message.from_user.id
+#     user_info = session.query(User).filter_by(user_id=user_id).first()
+#     if user_info.sub_status is False:
+#         text = 'Вы уже отписаны от уведомлений бота!'
+#         update.message.reply_text(text, reply_markup=get_keyboard())
+#     else:
+#         user_info.sub_status = False
+#         session.commit()
+#         text = 'Вы отписались от уведомлений бота!'
+#         update.message.reply_text(text, reply_markup=get_keyboard())
 
 
 # команда генерации юзеров для тестирования БД
@@ -129,13 +136,41 @@ def unsubscribe(update, context):
 #         s.commit()
 
 
-# def unsubscribe(update, context):
-#
-#     async def main_loop():
-#         while True:
-#             now_time_user = datetime.utcnow()
-#             await asyncio.sleep(10)
-#             text = f'{now_time_user}'
-#             update.message.reply_text(text=text, reply_markup=get_keyboard())
-#
-#     asyncio.run(main_loop())
+def unsubscribe(update, context):
+    async def main_loop():
+        DAY = 86400  # время секунд в одних сутках
+
+        while True:
+            start_time, text = None, None
+            launch = send_processed_info_five_launch()
+            for item in launch:
+                start_time = item['start_time']
+                name_mission = item['name_mission']
+                provider = item['provider']
+                image = item['image']
+                location = item['location']
+                text = f'Название миссии - {name_mission}\n' \
+                       f'Поставщик - {provider}\n' \
+                       f'Ракето-носитель - {image}\n' \
+                       f'Место пуска - {location}\n' \
+                       f'Время пуска - {start_time}\n'
+                if start_time is None:
+                    continue
+                break
+            # start_time = '2021-05-03T19:01Z'
+            # start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%MZ')
+            start_time_sec = start_time.timestamp()
+            now_time_user = datetime.utcnow().isoformat(' ', 'seconds')
+            now_time_user = datetime.strptime(now_time_user, '%Y-%m-%d %H:%M:%S')
+            now_time_user_sec = now_time_user.timestamp()
+            delta_time = start_time_sec - now_time_user_sec
+            if delta_time > DAY:
+                await asyncio.sleep(5)
+                print('lol')
+                # await asyncio.sleep(DAY)
+            else:
+                await asyncio.sleep(10)
+                # await asyncio.sleep(delta_time)
+                update.message.reply_text(text=text, reply_markup=get_keyboard())
+
+    asyncio.run(main_loop())

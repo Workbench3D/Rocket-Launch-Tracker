@@ -39,7 +39,7 @@ def main():
         '^(Список ближайших пяти пусков ракето-носителей)$'),
         send_launch_buttons))
     dp.add_handler(MessageHandler(Filters.regex(
-        f'^(Подписаться на получение уведомлений)$'),
+        '^(Подписаться на получение уведомлений)$'),
         subscription))
     dp.add_handler(MessageHandler(Filters.regex(
         '^(Отписаться от получение уведомлений)$'),
