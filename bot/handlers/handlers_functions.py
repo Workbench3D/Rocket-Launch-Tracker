@@ -1,93 +1,84 @@
+from bot.handlers.utils import *
+from datetime import datetime
 from telegram import ReplyKeyboardMarkup, KeyboardButton, \
     InlineKeyboardButton, InlineKeyboardMarkup
-import os
-import os.path
-from datetime import datetime
-from bot.models import Session, User
-
-from bot.handlers.utils import find_near_pad_location, \
-    send_processed_info_five_launch
-import random
 import asyncio
+import random
 
-session = Session()
 
-
-# клавиатура
 def get_keyboard():
+    """Команда реализующая отрображение клавиатуры, срабатывающая
+    после отправки команды /start"""
+
     my_keyboard = ReplyKeyboardMarkup([
         [KeyboardButton('Ближайший космодром', request_location=True)],
         ['Список ближайших пяти пусков ракето-носителей'],
         ['Подписаться на получение уведомлений',
-         'Отписаться от получение уведомлений']
+         'Отписаться от получение уведомлений'],
+        ['Test button']
     ], resize_keyboard=True)
     return my_keyboard
 
 
-# функция запуска старта в боте
 def start_bot(update, context):
+    """Функция срабатывающая при отправки команды /start, отправляющая
+    сообщение и запускающая функцию добавления пользователя телеграм
+    в базу данных бота"""
+
+    add_database(update.message.from_user.id)
+
     text = 'Добро пожаловать в Rocket Launch Tracker!\n\n' \
            'Бот предназначен для отслеживания пусков ' \
            'ракета-носителей разных стран.\n\n' \
            'Чем помочь?'
-    user_id = update.message.from_user.id
-    user_info = User(user_id=user_id, sub_status=False)
-    session.add(user_info)
-    session.commit()
-    update.message.reply_text(text, reply_markup=get_keyboard())
+    update.message.reply_text(text=text, reply_markup=get_keyboard())
 
 
-# команда получения геокоординат
 def send_near_pad_location(update, context):
+    """Функция формирующая и отправляющая сообщение с информацией о
+    ближайшем космодроме от пользователя телеграм"""
+
     route = find_near_pad_location(update.message.location)
     pad_name = route['pad_name']
     distance = route['distance']
     azimuth = route['azimuth']
+
     text = f'Ближайший космодром {pad_name}\n' \
            f'расположен на растоянии {distance} км,\n' \
            f'на {azimuth} напровлении!'
     update.message.reply_text(text=text, reply_markup=get_keyboard())
 
 
-# команда получения данных и представлении в виде кнопок по пяти пускам
 def send_launch_buttons(update, context):
-    launch = send_processed_info_five_launch()
+    """Функция формирующая 5 инлайновых кнопок с краткой информацией
+    о предстоящих пусках"""
+
+    launch = edit_json_api()
 
     inline_list = []
+
     for item in launch:
-        callback_data = item['name_mission']
         name_mission = item['name_mission']
         inline_button = [InlineKeyboardButton(
-            text=name_mission, callback_data=callback_data)]
+            text=name_mission, callback_data=name_mission)]
         inline_list.append(inline_button)
+
     inline_keyboard = InlineKeyboardMarkup(inline_list)
+
     text = 'Названия миссии ближайших пяти пусков ракето-носителей'
     update.message.reply_text(text=text, reply_markup=inline_keyboard)
 
 
 def send_launch_info(update, context):
+    """Отправка сообщения в чат бота после нажатия инлайновой кнопки"""
+
     query = update.callback_query
     query.answer()
-    launch = send_processed_info_five_launch()
-    text = str()
-    image = str()
-    for item in launch:
-        if query.data == item['name_mission']:
-            name_mission = item['name_mission']
-            provider = item['provider']
-            image = item['image']
-            location = item['location']
-            start_time = item['start_time']
-            text = f'Название миссии - {name_mission}\n' \
-                   f'Поставщик - {provider}\n' \
-                   f'Ракето-носитель - {image}\n' \
-                   f'Место пуска - {location}\n' \
-                   f'Время пуска - {start_time}\n'
-
-    filename = os.path.join('images', f'{image}.jpg')
-    image = os.path.abspath(filename)
-
+    query = query.data
     chat_id = update.effective_chat.id
+
+    text, image = make_message(query)
+
     try:
         context.bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'),
                                caption=text)
@@ -95,30 +86,34 @@ def send_launch_info(update, context):
         context.bot.send_message(chat_id=chat_id, text=text)
 
 
-def subscription(update, context):
-    user_id = update.message.from_user.id
-    user_info = session.query(User).filter_by(user_id=user_id).first()
-    if user_info.sub_status is True:
+def subscribe(update, context):
+    """Функция меняющая статус подписки на True если пользователь
+    телеграм был неподписан, или отправляющая сообщение что
+    пользователь уже подписан на рассылку"""
+
+    status = subscribe_database(update.message.from_user.id)
+
+    if status is False:
         text = 'Вы уже подписаны на уведомления бота!'
-        update.message.reply_text(text, reply_markup=get_keyboard())
     else:
-        user_info.sub_status = True
-        session.commit()
         text = 'Вы подписалить на уведомления бота!'
-        update.message.reply_text(text, reply_markup=get_keyboard())
+
+    update.message.reply_text(text=text, reply_markup=get_keyboard())
 
 
-# def unsubscribe(update, context):
-#     user_id = update.message.from_user.id
-#     user_info = session.query(User).filter_by(user_id=user_id).first()
-#     if user_info.sub_status is False:
-#         text = 'Вы уже отписаны от уведомлений бота!'
-#         update.message.reply_text(text, reply_markup=get_keyboard())
-#     else:
-#         user_info.sub_status = False
-#         session.commit()
-#         text = 'Вы отписались от уведомлений бота!'
-#         update.message.reply_text(text, reply_markup=get_keyboard())
+def unsubscribe(update, context):
+    """Функция меняющая статус подписки на False если пользователь
+    телеграм был подписан, или отправляющая сообщение что
+    пользователь и так отподписан от рассылки"""
+
+    status = unsubscribe_database(update.message.from_user.id)
+
+    if status is False:
+        text = 'Вы уже отписаны от уведомлений бота!'
+    else:
+        text = 'Вы отписались от уведомлений бота!'
+
+    update.message.reply_text(text=text, reply_markup=get_keyboard())
 
 
 # команда генерации юзеров для тестирования БД
@@ -136,22 +131,22 @@ def subscription(update, context):
 #         s.commit()
 
 
-def unsubscribe(update, context):
+def test_func(update, context):
     async def main_loop():
         DAY = 86400  # время секунд в одних сутках
 
         while True:
             start_time, text = None, None
-            launch = send_processed_info_five_launch()
+            launch = edit_json_api()
             for item in launch:
                 start_time = item['start_time']
                 name_mission = item['name_mission']
                 provider = item['provider']
-                image = item['image']
+                vehicle = item['vehicle']
                 location = item['location']
                 text = f'Название миссии - {name_mission}\n' \
                        f'Поставщик - {provider}\n' \
-                       f'Ракето-носитель - {image}\n' \
+                       f'Ракето-носитель - {vehicle}\n' \
                        f'Место пуска - {location}\n' \
                        f'Время пуска - {start_time}\n'
                 if start_time is None:

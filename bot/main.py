@@ -1,11 +1,9 @@
+from bot.handlers.handlers_functions import *
+from bot import settings
+from logging.handlers import RotatingFileHandler
 from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, \
     MessageHandler, Updater
 import logging
-
-from bot import settings
-from bot.handlers.handlers_functions import *
-
-from logging.handlers import RotatingFileHandler
 
 
 log_formatter = logging.Formatter(
@@ -39,11 +37,11 @@ def main():
         '^(Список ближайших пяти пусков ракето-носителей)$'),
         send_launch_buttons))
     dp.add_handler(MessageHandler(Filters.regex(
-        '^(Подписаться на получение уведомлений)$'),
-        subscription))
+        '^(Подписаться на получение уведомлений)$'), subscribe))
     dp.add_handler(MessageHandler(Filters.regex(
-        '^(Отписаться от получение уведомлений)$'),
-        unsubscribe))
+        '^(Отписаться от получение уведомлений)$'), unsubscribe))
+    dp.add_handler(MessageHandler(Filters.regex(
+        '^(Test button)$'), test_func))
     dp.add_handler(MessageHandler(Filters.location, send_near_pad_location))
 
     dp.add_handler(CallbackQueryHandler(send_launch_info))
