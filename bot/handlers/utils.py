@@ -64,6 +64,50 @@ def make_message(query):
     return text, image
 
 
+def notification_message():
+    """Функция формирующая сообщение после нажатия инлайновой кнопки"""
+
+    launch = edit_json_api()
+
+    name_mission = launch[0]['name_mission']
+    provider = launch[0]['provider']
+    vehicle = launch[0]['vehicle']
+    location = launch[0]['location']
+    start_time = launch[0]['start_time']
+
+    filename = os.path.join('images', f'{vehicle}.jpg')
+    image = os.path.abspath(filename)
+
+    text = f'Название миссии - {name_mission}\n' \
+           f'Поставщик - {provider}\n' \
+           f'Ракето-носитель - {vehicle}\n' \
+           f'Место пуска - {location}\n' \
+           f'Время пуска - {start_time}\n'
+
+    return text, image
+
+
+def near_start_launch():
+    start_time, text = None, None
+    launch = edit_json_api()
+
+    for item in launch:
+        start_time = item['start_time']
+        name_mission = item['name_mission']
+        provider = item['provider']
+        vehicle = item['vehicle']
+        location = item['location']
+        text = f'Название миссии - {name_mission}\n' \
+               f'Поставщик - {provider}\n' \
+               f'Ракето-носитель - {vehicle}\n' \
+               f'Место пуска - {location}\n'
+        if start_time is None:
+            continue
+        break
+
+    return start_time, text
+
+
 def find_near_pad_location(my_point):
     """Функция расчитывающая растояние и азимут к ближайшему космодрому"""
 
@@ -135,32 +179,45 @@ def add_database(telegram_id):
 
     Это нуждо чтобы отслеживать подписки пользователей на бота"""
 
-    user_info = User(telegram_id=telegram_id, sub_status=False)
-    session.add(user_info)
-    session.commit()
-
-
-def subscribe_database(telegram_id):
-    """Функция меняющая статус пользователя в базе данных на подписаного"""
-
     user_info = session.query(User).filter_by(telegram_id=telegram_id).first()
-
-    if user_info.sub_status is True:
-        return False
-    else:
-        user_info.sub_status = True
+    if user_info is None:
+        user_info = User(telegram_id=telegram_id, sub_status=False)
+        session.add(user_info)
         session.commit()
-        return True
 
 
-def unsubscribe_database(telegram_id):
-    """Функция меняющая статус пользователя в базе данных на отподписаного"""
-
-    user_info = session.query(User).filter_by(telegram_id=telegram_id).first()
-
-    if user_info.sub_status is False:
-        return False
-    else:
-        user_info.sub_status = False
-        session.commit()
-        return True
+# def subscribe_database(telegram_id):
+#     """Функция меняющая статус пользователя в базе данных на подписаного"""
+#
+#     user_info = session.query(User).filter_by(telegram_id=telegram_id).first()
+#
+#     if user_info.sub_status is True:
+#         return False
+#     else:
+#         user_info.sub_status = True
+#         session.commit()
+#         return True
+#
+#
+# def unsubscribe_database(telegram_id):
+#     """Функция меняющая статус пользователя в базе данных на отподписаного"""
+#
+#     user_info = session.query(User).filter_by(telegram_id=telegram_id).first()
+#
+#     if user_info.sub_status is False:
+#         return False
+#     else:
+#         user_info.sub_status = False
+#         session.commit()
+#         return True
+#
+#
+# def subscribe_status(telegram_id):
+#     """Функция определяющая статус пользователя в базе данных"""
+#
+#     user_info = session.query(User).filter_by(telegram_id=telegram_id).first()
+#
+#     if user_info.sub_status is True:
+#         return True
+#     else:
+#         return False

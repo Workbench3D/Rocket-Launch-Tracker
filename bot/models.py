@@ -10,6 +10,7 @@ Session = sessionmaker(bind=engine)
 
 
 class User(Base):
+
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     telegram_id = Column(Integer, unique=True)
@@ -20,7 +21,8 @@ class User(Base):
         self.sub_status = sub_status
 
     def __repr__(self):
-        return f'telegram_id: {self.telegram_id}, sub_status: {self.sub_status}'
+        return f'telegram_id: {self.telegram_id}, ' \
+               f'sub_status: {self.sub_status}'
 
 
 Base.metadata.create_all(engine)

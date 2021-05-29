@@ -1,8 +1,8 @@
 from bot.handlers.handlers_functions import *
 from bot import settings
 from logging.handlers import RotatingFileHandler
-from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, \
-    MessageHandler, Updater
+from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
+                          MessageHandler, Updater)
 import logging
 
 
@@ -29,25 +29,22 @@ def main():
     dp = updater.dispatcher
 
     # обработчик команд
-    start_handler = CommandHandler('start', start_bot)
-    dp.add_handler(start_handler)
+    dp.add_handler(CommandHandler('start', start_bot))
 
     # обработчик кнопок
     dp.add_handler(MessageHandler(Filters.regex(
         '^(Список ближайших пяти пусков ракето-носителей)$'),
         send_launch_buttons))
-    dp.add_handler(MessageHandler(Filters.regex(
-        '^(Подписаться на получение уведомлений)$'), subscribe))
-    dp.add_handler(MessageHandler(Filters.regex(
-        '^(Отписаться от получение уведомлений)$'), unsubscribe))
-    dp.add_handler(MessageHandler(Filters.regex(
-        '^(Test button)$'), test_func))
+    # dp.add_handler(MessageHandler(Filters.regex(
+    #     '^(Подписаться на получение уведомлений)$'), subscribe))
+    # dp.add_handler(MessageHandler(Filters.regex(
+    #     '^(Отписаться от получение уведомлений)$'), unsubscribe))
     dp.add_handler(MessageHandler(Filters.location, send_near_pad_location))
 
     dp.add_handler(CallbackQueryHandler(send_launch_info))
 
     # обработчик любых сообщений, обрабатывает только текст
-    # dp.add_handler(MessageHandler(Filters.text, talk_to_me))
+    # dp.add_handler(MessageHandler(Filters.text, notification_timer))
 
     # частые обращения за обновлением
     updater.start_polling()
