@@ -19,6 +19,7 @@ urllib3==1.26.4
 # for database
 sqlalchemy==1.4.12
 psycopg2==2.8.6
+alembic==1.6.5
 
 # for work GPS
 pyproj==3.0.1
